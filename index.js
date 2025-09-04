@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: "new",
+    headless: "new",   // pakai headless chromium modern
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
   const page = await browser.newPage();
@@ -17,45 +17,45 @@ const puppeteer = require("puppeteer");
   // Ganti URL ke grup kalau mau like post di grup
   await page.goto("https://facebook.com/groups/514277487342192/", { waitUntil: "networkidle2" });
 
-  let max = 10;        // jumlah like maksimal
-  let delayMs = 4000;  // delay antar aksi (ms)
-  let clicked = 0;
+  let max = 10;          // jumlah like maksimal
+  let userDelay = 3000;  // delay antar klik (ms)
 
+  let clicked = 0;
   async function delay(ms) {
     return new Promise(res => setTimeout(res, ms));
   }
 
   while (clicked < max) {
-    try {
-      // Cari tombol like yang belum diklik (paling atas yang terlihat)
-      const btn = await page.$(
-        "div[role='button'][aria-label*='Like'], " +
-        "div[role='button'][aria-label*='Suka']"
-      );
+    // Cari tombol like (support bahasa Inggris & Indonesia)
+    let buttons = await page.$$(
+      "div[role='button'][aria-label*='Like'], " +
+      "div[role='button'][aria-label*='Suka']"
+    );
 
-      if (!btn) {
-        console.log("🔄 Tidak ada tombol Like kelihatan, scroll...");
+    if (buttons.length === 0) {
+      console.log("🔄 Scroll cari tombol lagi...");
+      await page.evaluate(() => window.scrollBy(0, 500));
+      await delay(userDelay);
+      continue;
+    }
+
+    for (let btn of buttons) {
+      if (clicked >= max) break;
+
+      try {
+        await btn.click();
+        clicked++;
+        console.log(`👍 Klik tombol Like ke-${clicked}`);
+        await delay(userDelay);
+
+        // Scroll supaya muncul postingan baru
         await page.evaluate(() => window.scrollBy(0, 500));
-        await delay(delayMs);
+        await delay(userDelay);
+      } catch (err) {
+        console.log("⚠️ Gagal klik tombol Like, skip:", err.message);
+        // skip tombol error → lanjut tombol berikutnya
         continue;
       }
-
-      // Klik tombol like
-      await btn.click();
-      clicked++;
-      console.log(`👍 Klik tombol Like ke-${clicked}`);
-
-      // Tunggu sebentar
-      await delay(delayMs);
-
-      // Scroll ke bawah sedikit agar postingan baru muncul
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await delay(delayMs);
-
-    } catch (err) {
-      console.log("⚠️ Error klik tombol:", err.message);
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await delay(delayMs);
     }
   }
 
