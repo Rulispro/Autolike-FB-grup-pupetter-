@@ -1,0 +1,28 @@
+[
+  {
+    "domain": ".facebook.com",
+    "expirationDate": 1735660800,
+    "hostOnly": false,
+    "httpOnly": true,
+    "name": "c_user",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": true,
+    "session": false,
+    "storeId": "0",
+    "value": "61576977154304"
+  },
+  {
+    "domain": ".facebook.com",
+    "expirationDate": 1735660800,
+    "hostOnly": false,
+    "httpOnly": true,
+    "name": "xs",
+    "path": "/",
+    "sameSite": "no_restriction",
+    "secure": true,
+    "session": false,
+    "storeId": "0",
+    "value": "49:6uG-HF6AReEggg:2:1749035626:-1:-1"
+  }
+]
