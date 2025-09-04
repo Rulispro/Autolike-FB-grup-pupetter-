@@ -1,7 +1,19 @@
 const puppeteer = require("puppeteer");
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: false, args: ["--no-sandbox"] });
+  const browser = await puppeteer.launch({
+  headless: "new",   // pakai headless chromium modern
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-accelerated-2d-canvas",
+    "--no-first-run",
+    "--no-zygote",
+    "--single-process", // kadang perlu di server
+    "--disable-gpu"
+  ]
+});
   const page = await browser.newPage();
 
   // === Pakai cookies biar langsung login ===
