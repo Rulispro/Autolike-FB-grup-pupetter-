@@ -15,7 +15,7 @@ const puppeteer = require("puppeteer");
   console.log("✅ Berhasil buka Facebook");
 
   // Ganti URL ke grup kalau mau like post di grup
-   await page.goto("https://www.facebook.com/groups/514277487342192/permalink/1110423967727538/", { waitUntil: "networkidle2" });
+   await page.goto("https://facebook.com/groups/514277487342192/", { waitUntil: "networkidle2" });
 
   let max = 10;       // jumlah like maksimal
   let userDelay = 3000; // delay antar klik (ms)
