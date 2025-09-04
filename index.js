@@ -3,16 +3,7 @@ const puppeteer = require("puppeteer");
 (async () => {
   const browser = await puppeteer.launch({
   headless: "new",   // pakai headless chromium modern
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-accelerated-2d-canvas",
-    "--no-first-run",
-    "--no-zygote",
-    "--single-process", // kadang perlu di server
-    "--disable-gpu"
-  ]
+  args: ["--no-sandbox", "--disable-setuid-sandbox"]
 });
   const page = await browser.newPage();
 
