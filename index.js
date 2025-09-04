@@ -27,7 +27,11 @@ const puppeteer = require("puppeteer");
 
   while (clicked < max) {
     // Cari tombol like
-    let buttons = await page.$$("div[role='button'][aria-label*='Like']");
+    //let buttons = await page.$$("div[role='button'][aria-label*='Like']");
+      let buttons = await page.$$(
+  "div[role='button'][aria-label*='Like'], " +
+  "div[role='button'][aria-label*='Suka']"
+);
 
     if (buttons.length === 0) {
       console.log("🔄 Scroll cari tombol lagi...");
