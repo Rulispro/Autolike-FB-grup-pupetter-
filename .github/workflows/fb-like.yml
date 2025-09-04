@@ -11,13 +11,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # Setup Node.js + caching npm otomatis
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: "npm"
 
+      # Install dependencies (lebih cepat karena cache)
       - name: Install dependencies
-        run:  npm install puppeteer
+        run: npm ci
 
+      # Jalankan bot
       - name: Run Facebook Auto Like Bot
-        run:  node index.js
+        run: node index.js
