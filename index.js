@@ -11,7 +11,7 @@ const puppeteer = require("puppeteer");
   const cookies = require("./cookies.json");
   await page.setCookie(...cookies);
 
-  await page.goto("https://www.facebook.com/", { waitUntil: "networkidle2" });
+  await page.goto("https://m.facebook.com/", { waitUntil: "networkidle2" });
   console.log("✅ Berhasil buka Facebook");
 
   // Ganti URL ke grup kalau mau like post di grup
