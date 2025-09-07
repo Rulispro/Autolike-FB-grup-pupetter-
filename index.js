@@ -62,7 +62,7 @@
  // console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
  // await browser.close();
 //})();
-const puppeteer = require("puppeteer");
+ const puppeteer = require("puppeteer");
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -71,11 +71,18 @@ const puppeteer = require("puppeteer");
   });
   const page = await browser.newPage();
 
-  // === Samakan dengan browser Kiwi (Android Chrome) ===
+  // === Samakan environment dengan browser Kiwi (Android Chrome) ===
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
     "(KHTML, like Gecko) Chrome/95.0.4638.74 Mobile Safari/537.36"
   );
+
+  await page.setViewport({
+    width: 390,   // ukuran layar Android
+    height: 844,  // tinggi layar
+    isMobile: true,
+    hasTouch: true
+  });
 
   // === Pakai cookies biar langsung login ===
   const cookies = require("./cookies.json");
@@ -97,24 +104,12 @@ const puppeteer = require("puppeteer");
   }
 
   while (clicked < max) {
-    const liked = await page.evaluate(() => {
-      let btn = Array.from(
-        document.querySelectorAll('div[role="button"][aria-label]')
-      ).find(b => 
-        b.offsetParent !== null &&
-        !b.dataset.liked &&
-        /like|suka/i.test(b.getAttribute("aria-label"))
-      );
+    const button = await page.$(
+      'div[role="button"][aria-label*="Like"],div[role="button"][aria-label*="like"], div[role="button"][aria-label*="Suka"]'
+    );
 
-      if (btn) {
-        btn.click();
-        btn.dataset.liked = "true";
-        return true;
-      }
-      return false;
-    });
-
-    if (liked) {
+    if (button) {
+      await button.tap(); // ✅ simulate tap (touchscreen)
       clicked++;
       console.log(`👍 Klik tombol Like ke-${clicked}`);
     } else {
@@ -129,4 +124,3 @@ const puppeteer = require("puppeteer");
   console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
   await browser.close();
 })();
-
