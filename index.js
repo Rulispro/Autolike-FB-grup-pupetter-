@@ -63,7 +63,7 @@
  // await browser.close();
 //})();
 
-const puppeteer = require("puppeteer");
+ const puppeteer = require("puppeteer");
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -91,38 +91,32 @@ const puppeteer = require("puppeteer");
   }
 
   while (clicked < max) {
-    try {
-      // Cari dan klik tombol Like pakai page.evaluate
-      const result = await page.evaluate(() => {
-        // Ambil semua tombol Like / Suka yang kelihatan di viewport
-        const buttons = Array.from(document.querySelectorAll("div[role='button']"))
-          .filter(btn =>
-            btn.innerText.match(/Like|Suka/i)
-          );
+    const newlyClicked = await page.evaluate((max, clicked) => {
+      let buttons = Array.from(document.querySelectorAll('div[role="button"][aria-label*="like"]'))
+        .filter(btn => btn.offsetParent !== null && !btn.dataset.liked);
 
-        if (buttons.length > 0) {
-          buttons[0].click(); // klik yang paling atas
-          return true;
-        }
-        return false;
-      });
+      let localClicks = 0;
 
-      if (result) {
-        clicked++;
-        console.log(`👍 Klik tombol Like ke-${clicked}`);
-      } else {
-        console.log("🔄 Tidak ada tombol Like kelihatan, scroll...");
+      for (let btn of buttons) {
+        if (clicked + localClicks >= max) break;
+        btn.click();
+        btn.dataset.liked = "true"; // tandai supaya tidak diklik ulang
+        localClicks++;
       }
 
-      // Scroll ke bawah sedikit supaya postingan baru muncul
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await delay(delayMs);
+      return localClicks;
+    }, max, clicked);
 
-    } catch (err) {
-      console.log("⚠️ Error:", err.message);
-      await page.evaluate(() => window.scrollBy(0, 500));
-      await delay(delayMs);
+    if (newlyClicked > 0) {
+      clicked += newlyClicked;
+      console.log(`👍 Klik ${newlyClicked} tombol Like, total: ${clicked}`);
+    } else {
+      console.log("🔄 Tidak ada tombol Like baru, scroll...");
     }
+
+    // Scroll biar postingan baru muncul
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await delay(delayMs);
   }
 
   console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
