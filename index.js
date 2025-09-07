@@ -63,7 +63,7 @@
  // await browser.close();
 //})();
 
- const puppeteer = require("puppeteer");
+  const puppeteer = require("puppeteer");
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -91,30 +91,27 @@
   }
 
   while (clicked < max) {
-    const newlyClicked = await page.evaluate((max, clicked) => {
-      let buttons = Array.from(document.querySelectorAll('div[role="button"][aria-label*="like"]'))
-        .filter(btn => btn.offsetParent !== null && !btn.dataset.liked);
+    const liked = await page.evaluate(() => {
+      let btn = Array.from(
+        document.querySelectorAll('div[role="button"][aria-label*="like"]')
+      ).find(b => b.offsetParent !== null && !b.dataset.liked);
 
-      let localClicks = 0;
-
-      for (let btn of buttons) {
-        if (clicked + localClicks >= max) break;
+      if (btn) {
         btn.click();
-        btn.dataset.liked = "true"; // tandai supaya tidak diklik ulang
-        localClicks++;
+        btn.dataset.liked = "true"; // tandai biar ga diklik ulang
+        return true;
       }
+      return false;
+    });
 
-      return localClicks;
-    }, max, clicked);
-
-    if (newlyClicked > 0) {
-      clicked += newlyClicked;
-      console.log(`👍 Klik ${newlyClicked} tombol Like, total: ${clicked}`);
+    if (liked) {
+      clicked++;
+      console.log(`👍 Klik tombol Like ke-${clicked}`);
     } else {
-      console.log("🔄 Tidak ada tombol Like baru, scroll...");
+      console.log("🔄 Tidak ada tombol Like, scroll...");
     }
 
-    // Scroll biar postingan baru muncul
+    // Scroll ke bawah supaya postingan baru muncul
     await page.evaluate(() => window.scrollBy(0, 500));
     await delay(delayMs);
   }
