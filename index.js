@@ -62,7 +62,7 @@
  // console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
  // await browser.close();
 //})();
- const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer");
 
 (async () => {
  const browser = await puppeteer.launch({
@@ -95,33 +95,60 @@
   // Ganti URL ke grup (pakai m.facebook.com biar sama kayak Kiwi)
   await page.goto("https://facebook.com/groups/5763845890292336/", { waitUntil: "networkidle2" });
 
-  let max = 10;        // jumlah like maksimal
-  let delayMs = 3000;  // delay antar aksi (ms)
+  let max = 10; // jumlah like maksimal
+  let delayMs = 3000; // delay antar aksi (ms)
   let clicked = 0;
 
   async function delay(ms) {
-    return new Promise(res => setTimeout(res, ms));
+    return new Promise((res) => setTimeout(res, ms));
   }
 
   while (clicked < max) {
-    const button = await page.$(
-      'div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="like"], div[role="button"][aria-label*="Suka"]'
-   );
+    // Tunggu tombol Like muncul
+    const likeButton = await page.$('div[role="button"][aria-label*="like"], div[role="button"][aria-label*="LIKE"], div[role="button"][aria-label*="Suka"]');
 
+    if (likeButton) {
+      console.log(`🔍 Tombol Like ditemukan ke-${clicked + 1}`);
 
-if (button) {
-      await button.click(); // ✅ simulate tap (touchscreen)
+      // Jalankan di konteks browser
+      await page.evaluate((el) => {
+        function trigger(el, type, props = {}) {
+          const event = new Event(type, { bubbles: true, cancelable: true, composed: true });
+          Object.assign(event, props);
+          el.dispatchEvent(event);
+        }
+
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        el.style.outline = "3px solid red";
+
+        trigger(el, "pointerover", { pointerType: "touch" });
+        trigger(el, "pointerenter", { pointerType: "touch" });
+        trigger(el, "pointerdown", { pointerType: "touch", isPrimary: true, clientX: cx, clientY: cy });
+        trigger(el, "touchstart", { touches: [{ clientX: cx, clientY: cy }] });
+
+        setTimeout(() => {
+          trigger(el, "pointerup", { pointerType: "touch", isPrimary: true, clientX: cx, clientY: cy });
+          trigger(el, "touchend", { changedTouches: [{ clientX: cx, clientY: cy }] });
+          trigger(el, "mouseup", { clientX: cx, clientY: cy });
+          trigger(el, "click", { clientX: cx, clientY: cy });
+          console.log("👍 Klik Like berhasil dikirim!");
+        }, 150);
+      }, likeButton);
+
       clicked++;
-      console.log(`👍 Klik tombol Like ke-${clicked}`);
+      await delay(delayMs);
     } else {
-      console.log('tombol tidak direkomendasikan');
-}
-  
+      console.log("🔄 Tidak ditemukan tombol Like, scroll untuk mencari lagi...");
+    }
 
-    // Scroll sedikit biar postingan baru muncul
+    
+    // ✅ Scroll sedikit biar postingan baru muncul
     await page.evaluate(() => window.scrollBy(0, 500));
-   await delay(delayMs);
- }
+    await delay(delayMs);
+  }
 
  console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
   await browser.close();
