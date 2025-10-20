@@ -108,13 +108,42 @@
       'div[role="button"][aria-label*="Like"],div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="like"], div[role="button"][aria-label*="Suka"]'
    );
 
-    if (button) {
-      await button.tap(); // ✅ simulate tap (touchscreen)
-      clicked++;
-      console.log(`👍 Klik tombol Like ke-${clicked}`);
-    } else {
-      console.log("🔄 Tidak ada tombol Like, scroll...");
+    const button = await page.$(
+  'div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="Suka"]'
+);
+
+if (button) {
+  await page.evaluate((el) => {
+    function trigger(type, props = {}) {
+      const event = new Event(type, { bubbles: true, cancelable: true, composed: true });
+      Object.assign(event, props);
+      el.dispatchEvent(event);
     }
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // 👉 simulasi sentuhan lengkap
+    trigger("pointerover", { pointerType: "touch" });
+    trigger("pointerenter", { pointerType: "touch" });
+    trigger("pointerdown", { pointerType: "touch", isPrimary: true, clientX: centerX, clientY: centerY });
+    trigger("touchstart", { touches: [{ clientX: centerX, clientY: centerY }] });
+
+    // tahan sedikit untuk efek “pressed”
+    setTimeout(() => {
+      trigger("pointerup", { pointerType: "touch", isPrimary: true, clientX: centerX, clientY: centerY });
+      trigger("touchend", { changedTouches: [{ clientX: centerX, clientY: centerY }] });
+      trigger("mouseup");
+      trigger("click");
+    }, 180);
+  }, button);
+
+  clicked++;
+  console.log(`👍 Klik tombol Like ke-${clicked}`);
+} else {
+  console.log("🔄 Tidak ada tombol Like, scroll...");
+}
 
     // Scroll sedikit biar postingan baru muncul
     await page.evaluate(() => window.scrollBy(0, 500));
