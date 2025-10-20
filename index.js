@@ -114,8 +114,8 @@ if (button) {
       clicked++;
       console.log(`👍 Klik tombol Like ke-${clicked}`);
     } else {
-      console.log("
-
+      console.log('tombol tidak direkomendasikan');
+}
   
 
     // Scroll sedikit biar postingan baru muncul
