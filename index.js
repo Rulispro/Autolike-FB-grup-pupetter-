@@ -105,7 +105,7 @@
 
   while (clicked < max) {
     const button = await page.$(
-      'div[role="button"][aria-label*="Like"],div[role="button"][aria-label*="like"], div[role="button"][aria-label*="Suka"]'
+      'div[role="button"][aria-label*="Like"],div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="like"], div[role="button"][aria-label*="Suka"]'
    );
 
     if (button) {
