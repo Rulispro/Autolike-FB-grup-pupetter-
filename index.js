@@ -116,7 +116,7 @@
       console.log("🔄 Tidak ada tombol Like, scroll...");
     }
 
-     Scroll sedikit biar postingan baru muncul
+    // Scroll sedikit biar postingan baru muncul
     await page.evaluate(() => window.scrollBy(0, 500));
    await delay(delayMs);
  }
