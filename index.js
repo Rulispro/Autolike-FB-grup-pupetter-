@@ -93,7 +93,7 @@ const puppeteer = require("puppeteer");
   console.log("✅ Berhasil buka Facebook (mobile)");
 
   // Ganti URL ke grup (pakai m.facebook.com biar sama kayak Kiwi)
-  await page.goto("https://facebook.com/groups/5763845890292336/", { waitUntil: "networkidle2" });
+  await page.goto("https://m.facebook.com/groups/514277487342192/", { waitUntil: "networkidle2" });
 
   let max = 10; // jumlah like maksimal
   let delayMs = 3000; // delay antar aksi (ms)
