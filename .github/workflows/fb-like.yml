@@ -9,23 +9,35 @@ jobs:
 
     env:
       PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true  # ⛔ Jangan download Chromium
-      NODE_ENV: production                    # ⚡ Install lebih cepat, tanpa devDependencies
+      NODE_ENV: production                    # ⚡ Install lebih cepat
+      DEBUG: "puppeteer:*"                    # 🧩 Lihat semua log Puppeteer
 
     steps:
-      - name: Checkout repo
+      - name: 📦 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🧰 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"   # ⚡ Cache otomatis berdasarkan lockfile
 
-      - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund
-        # --prefer-offline  => pakai cache dulu
-        # --no-audit & --no-fund => hemat waktu
+      # 🔧 Buat package-lock.json kalau belum ada
+      - name: 🛠 Generate lockfile (jika belum ada)
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "⚙️ Membuat package-lock.json..."
+            npm install --package-lock-only
+          fi
 
-      - name: Jalankan Facebook Auto Like Bot
+      - name: ⚡ Install dependencies (cepat)
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: 🧹 Pastikan Chrome tersedia
+        run: |
+          which google-chrome || sudo apt-get update
+          sudo apt-get install -y google-chrome-stable || true
+
+      - name: 🚀 Jalankan Facebook Auto Like Bot
         run: node index.js
         
