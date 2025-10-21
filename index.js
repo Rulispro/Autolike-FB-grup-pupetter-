@@ -231,14 +231,24 @@ const puppeteer = require("puppeteer");
 
     // ✅ Coba cek apakah klik benar-benar diterima oleh FB
     const logs = await page.evaluate(() => {
-      return [...document.querySelectorAll("div[role='button']")]
-        .filter((b) => b.getAttribute("aria-label")?.includes("Like")) || b.getAttribute("aria-label")?.includes("LIKE")) || b.getAttribute("aria-label")?.includes("like"))
-        .map((b, i) => ({
-          index: i,
-          aria: b.getAttribute("aria-label"),
-          liked: b.getAttribute("aria-pressed") === "true",
-        }));
-    });
+  return [...document.querySelectorAll("div[role='button']")]
+    .filter((b) => {
+      const aria = b.getAttribute("aria-label") || "";
+      return (
+        aria.includes("Like") ||
+        aria.includes("LIKE") ||
+        aria.includes("like") ||
+        aria.includes("Suka") ||
+        aria.includes("suka")
+      );
+    })
+    .map((b, i) => ({
+      index: i,
+      aria: b.getAttribute("aria-label"),
+      liked: b.getAttribute("aria-pressed") === "true",
+    }));
+});
+            
     console.log("🧩 Status tombol Like di DOM:", logs.slice(0, 3));
 
     // Fallback jika Like tidak berubah (klik simulasi gagal)
