@@ -98,10 +98,39 @@ const puppeteer = require("puppeteer");
   console.log("✅ Berhasil buka Facebook");
 
   // Masuk ke grup
-  await page.goto("https://m.facebook.com/groups/514277487342192/", { waitUntil: "networkidle2" });
+  await page.goto("https://m.facebook.com/groups/514277487342192/", {
+    waitUntil: "networkidle2",
+  });
   console.log("✅ Masuk ke grup Facebook");
 
+  // Fungsi delay
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+  // Expose log event dari browser ke console Node.js
+  await page.exposeFunction("logClickEvent", (e) => {
+    console.log("📡 Klik Like terdeteksi di browser:", e);
+  });
+
+  // Tambahkan listener event klik di browser (debug)
+  await page.evaluate(() => {
+    document.addEventListener(
+      "click",
+      (e) => {
+        const el = e.target.closest(
+          'div[role="button"][aria-label*="Like"], div[role="button"][aria-label*="Suka"]'
+        );
+        if (el) {
+          window.logClickEvent({
+            text: el.innerText,
+            tag: el.tagName,
+            time: new Date().toLocaleTimeString(),
+            isTrusted: e.isTrusted,
+          });
+        }
+      },
+      true
+    );
+  });
 
   let clicked = 0;
   const max = 10; // jumlah posting yang akan di-like
@@ -109,22 +138,23 @@ const puppeteer = require("puppeteer");
   while (clicked < max) {
     console.log(`🔎 Mencari tombol Like ke-${clicked + 1}...`);
 
-    const result = await page.evaluate(() => {
-      const els = [...document.querySelectorAll('div[role="button"], a[role="button"], span, i, svg')];
+    // Jalankan simulasi di dalam halaman
+    const result = await page.evaluate(async () => {
+      const els = [
+        ...document.querySelectorAll(
+          'div[role="button"], a[role="button"], span, i, svg'
+        ),
+      ];
       let likeBtn = null;
 
       for (const el of els) {
-        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
-        const text = (el.innerText || '').trim();
-
+        const aria = (el.getAttribute("aria-label") || "").toLowerCase();
+        const text = (el.innerText || "").trim();
         if (
-          aria.includes('like') ||
-          aria.includes('Like') ||
-          aria.includes('LIKE') ||
-          aria.includes('Suka') ||
-          aria.includes('suka') ||
-          text === '󱍸' ||
-          text.includes('󱍸')
+          aria.includes("like") ||
+          aria.includes("suka") ||
+          text === "󱍸" ||
+          text.includes("󱍸")
         ) {
           likeBtn = el.closest('div[role="button"]') || el;
           break;
@@ -136,28 +166,58 @@ const puppeteer = require("puppeteer");
       likeBtn.scrollIntoView({ behavior: "smooth", block: "center" });
       likeBtn.style.outline = "3px solid red";
 
+      // --- Simulasi TAP realistis ---
+      function fire(el, type, props = {}) {
+        const event = new Event(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        });
+        Object.assign(event, props);
+        el.dispatchEvent(event);
+        console.log(`🔥 Fired: ${type}`, props);
+      }
+
       const rect = likeBtn.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
 
-      function fire(el, type, props = {}) {
-        const ev = new Event(type, { bubbles: true, cancelable: true, composed: true });
-        Object.assign(ev, props);
-        el.dispatchEvent(ev);
+      try {
+        fire(likeBtn, "pointerover", {
+          pointerType: "touch",
+          clientX: cx,
+          clientY: cy,
+        });
+        fire(likeBtn, "pointerenter", {
+          pointerType: "touch",
+          clientX: cx,
+          clientY: cy,
+        });
+        fire(likeBtn, "pointerdown", {
+          pointerType: "touch",
+          clientX: cx,
+          clientY: cy,
+        });
+        fire(likeBtn, "touchstart", {
+          touches: [{ clientX: cx, clientY: cy }],
+        });
+
+        setTimeout(() => {
+          fire(likeBtn, "pointerup", {
+            pointerType: "touch",
+            clientX: cx,
+            clientY: cy,
+          });
+          fire(likeBtn, "touchend", {
+            changedTouches: [{ clientX: cx, clientY: cy }],
+          });
+          fire(likeBtn, "mouseup", { clientX: cx, clientY: cy });
+          fire(likeBtn, "click", { clientX: cx, clientY: cy });
+          console.log("✅ Simulasi tap selesai");
+        }, 150);
+      } catch (err) {
+        console.error("⚠️ Gagal simulasi tap:", err);
       }
-
-      // Simulasikan sentuhan
-      fire(likeBtn, "pointerover", { pointerType: "touch" });
-      fire(likeBtn, "pointerenter", { pointerType: "touch" });
-      fire(likeBtn, "pointerdown", { pointerType: "touch", clientX: cx, clientY: cy });
-      fire(likeBtn, "touchstart", { touches: [{ clientX: cx, clientY: cy }] });
-
-      setTimeout(() => {
-        fire(likeBtn, "pointerup", { pointerType: "touch", clientX: cx, clientY: cy });
-        fire(likeBtn, "touchend", { changedTouches: [{ clientX: cx, clientY: cy }] });
-        fire(likeBtn, "mouseup", { clientX: cx, clientY: cy });
-        fire(likeBtn, "click", { clientX: cx, clientY: cy });
-      }, 150);
 
       return { ok: true };
     });
@@ -169,7 +229,37 @@ const puppeteer = require("puppeteer");
       continue;
     }
 
-    console.log(`👍 Like ke-${clicked + 1} berhasil!`);
+    // ✅ Coba cek apakah klik benar-benar diterima oleh FB
+    const logs = await page.evaluate(() => {
+      return [...document.querySelectorAll("div[role='button']")]
+        .filter((b) => b.getAttribute("aria-label")?.includes("Like")) || b.getAttribute("aria-label")?.includes("LIKE")) || b.getAttribute("aria-label")?.includes("like"))
+        .map((b, i) => ({
+          index: i,
+          aria: b.getAttribute("aria-label"),
+          liked: b.getAttribute("aria-pressed") === "true",
+        }));
+    });
+    console.log("🧩 Status tombol Like di DOM:", logs.slice(0, 3));
+
+    // Fallback jika Like tidak berubah (klik simulasi gagal)
+    if (!logs.some((b) => b.liked)) {
+      console.log("⚠️ Klik simulasi gagal, coba fallback .tap()");
+      try {
+        const likeBtn = await page.$(
+          'div[role="button"][aria-label*="like"],div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="Like"], div[role="button"][aria-label*="Suka"]'
+        );
+        if (likeBtn) {
+          await likeBtn.tap();
+          console.log("✅ Fallback .tap() berhasil dikirim");
+        } else {
+          console.log("❌ Tidak ada tombol Like untuk fallback");
+        }
+      } catch (err) {
+        console.error("❌ Fallback .tap() error:", err);
+      }
+    }
+
+    console.log(`👍 Like ke-${clicked + 1} selesai`);
     clicked++;
     await delay(4000 + Math.random() * 2000);
     await page.evaluate(() => window.scrollBy(0, 1000));
