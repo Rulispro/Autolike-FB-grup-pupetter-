@@ -253,21 +253,35 @@ const puppeteer = require("puppeteer");
 
     // Fallback jika Like tidak berubah (klik simulasi gagal)
     if (!logs.some((b) => b.liked)) {
-      console.log("⚠️ Klik simulasi gagal, coba fallback .tap()");
-      try {
-        const likeBtn = await page.$(
-          'div[role="button"][aria-label*="like"],div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="Like"], div[role="button"][aria-label*="Suka"]'
-        );
-        if (likeBtn) {
-          await likeBtn.tap();
-          console.log("✅ Fallback .tap() berhasil dikirim");
-        } else {
-          console.log("❌ Tidak ada tombol Like untuk fallback");
-        }
-      } catch (err) {
-        console.error("❌ Fallback .tap() error:", err);
+  console.log("⚠️ Klik simulasi gagal, coba fallback sentuhan nyata...");
+  try {
+    const likeBtn = await page.$(
+      'div[role="button"][aria-label*="like"],div[role="button"][aria-label*="LIKE"],div[role="button"][aria-label*="Like"],div[role="button"][aria-label*="Suka"]'
+    );
+    if (likeBtn) {
+      const box = await likeBtn.boundingBox();
+      if (box) {
+        const cx = box.x + box.width / 2;
+        const cy = box.y + box.height / 2;
+
+        // 🔹 klik langsung dari puppeteer (event Chrome DevTools)
+        await likeBtn.click({ delay: 80 });
+        console.log("✅ Fallback .click() berhasil dikirim");
+
+        // 🔹 simulasi tap via touchscreen API
+        await page.touchscreen.tap(cx, cy);
+        console.log("✅ Fallback touchscreen.tap() berhasil dikirim");
+      } else {
+        console.log("❌ Tidak ada bounding box tombol Like");
       }
+    } else {
+      console.log("❌ Tidak ada tombol Like untuk fallback");
     }
+  } catch (err) {
+    console.error("❌ Fallback klik fisik error:", err);
+  }
+}
+
 
     console.log(`👍 Like ke-${clicked + 1} selesai`);
     clicked++;
