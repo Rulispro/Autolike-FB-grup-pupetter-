@@ -62,6 +62,7 @@
  // console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
  // await browser.close();
 //})();
+"use strict";
 const puppeteer = require("puppeteer");
 
 (async () => {
@@ -69,9 +70,10 @@ const puppeteer = require("puppeteer");
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+
   const page = await browser.newPage();
 
-  // === Samakan environment dengan browser Kiwi (Android Chrome) ===
+  // === Samakan dengan environment Kiwi (Android) ===
   await page.setUserAgent(
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
       "(KHTML, like Gecko) Chrome/95.0.4638.74 Mobile Safari/537.36"
@@ -84,64 +86,70 @@ const puppeteer = require("puppeteer");
     hasTouch: true,
   });
 
-  // === Pakai cookies biar langsung login ===
+  // === Pakai cookies login ===
   const cookies = require("./cookies.json");
   await page.setCookie(...cookies);
 
-  // Buka versi mobile Facebook
+  // === Buka Facebook mobile ===
   await page.goto("https://m.facebook.com/", { waitUntil: "networkidle2" });
-  console.log("✅ Berhasil buka Facebook (mobile)");
+  console.log("✅ Berhasil buka Facebook");
 
-  // Ganti URL ke grup (pakai m.facebook.com biar sama kayak Kiwi)
+  // === Masuk ke grup ===
   await page.goto("https://m.facebook.com/groups/514277487342192/", {
     waitUntil: "networkidle2",
   });
 
-  let max = 10; // jumlah like maksimal
-  let delayMs = 3000; // delay antar aksi (ms)
+  const max = 10;
+  const delayMs = 3000;
   let clicked = 0;
 
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
   while (clicked < max) {
-    // Tunggu tombol Like muncul
-    const button = await page.$(
-      'div[role="button"][aria-label*="Like"], ' +
-        'div[role="button"][aria-label*="LIKE"], ' +
-        'div[role="button"][aria-label*="Suka"]'
-    );
+    console.log(`\n🔎 Mencari tombol Like ke-${clicked + 1}...`);
 
-    if (button) {
-      const box = await button.boundingBox();
-      if (box) {
-        console.log(`👍 Tombol Like ditemukan ke-${clicked + 1}`);
+    // Dapatkan posisi tombol Like
+    const box = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('div[role="button"]'));
+      const el = els.find(
+        (e) =>
+          e.innerText?.toLowerCase().includes("suka") ||
+          e.innerText?.toLowerCase().includes("like")
+      );
 
-        // Scroll ke posisi tombol biar terlihat
-        await page.evaluate((y) => window.scrollTo(0, y - 200), box.y);
-        await delay(1000);
+      if (!el) return null;
 
-        // Simulasi tap nyata (layaknya sentuhan jari di layar)
-        await page.touchscreen.tap(
-          box.x + box.width / 2,
-          box.y + box.height / 2
-        );
-        console.log(`🔥 Like ke-${clicked + 1} berhasil dikirim!`);
+      el.style.outline = "2px solid red";
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left + r.width / 2,
+        y: r.top + r.height / 2,
+      };
+    });
 
-        clicked++;
-        await delay(delayMs);
-      } else {
-        console.log("⚠️ Tidak bisa tap tombol (boundingBox null).");
-      }
-    } else {
-      console.log("🔄 Tidak ditemukan tombol Like, scroll ke bawah...");
+    if (!box) {
+      console.log("❌ Tidak ditemukan tombol Like, scroll ke bawah...");
+      await page.evaluate(() => window.scrollBy(0, 600));
+      await delay(2000);
+      continue;
     }
 
-    // Scroll sedikit biar postingan baru muncul
-    await page.evaluate(() => window.scrollBy(0, 500));
+    // Scroll ke posisi tombol biar kelihatan
+    await page.evaluate((y) => window.scrollTo(0, y - 200), box.y);
+    await delay(800);
+
+    // Tap gesture asli (bukan dispatch event manual)
+    await page.touchscreen.tap(box.x, box.y);
+    console.log(`👍 Like ke-${clicked + 1} berhasil dikirim (gesture asli)`);
+
+    clicked++;
     await delay(delayMs);
+
+    // Scroll agar postingan baru muncul
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await delay(1500);
   }
 
-  console.log(`🎉 Selesai! ${clicked} tombol Like sudah diklik.`);
+  console.log(`🎉 Selesai! ${clicked} postingan berhasil di-Like.`);
   await browser.close();
 })();
-          
