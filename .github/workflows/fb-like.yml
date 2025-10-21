@@ -6,6 +6,11 @@ on:
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+
+    env:
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true  # ⛔ Jangan download Chromium
+      NODE_ENV: production                    # ⚡ Install lebih cepat, tanpa devDependencies
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -14,20 +19,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Generate lockfile
-        run: npm install --package-lock-only
-
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
+          cache: "npm"   # ⚡ Cache otomatis berdasarkan lockfile
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
+        # --prefer-offline  => pakai cache dulu
+        # --no-audit & --no-fund => hemat waktu
 
-      - name: Run Facebook Auto Like Bot
+      - name: Jalankan Facebook Auto Like Bot
         run: node index.js
+        
