@@ -63,9 +63,7 @@
  // await browser.close();
 //})();
 "use strict";
-const puppeteer = require("puppeteer-extra");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
+const puppeteer = require("puppeteer");
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -84,7 +82,7 @@ puppeteer.use(StealthPlugin());
   const cookies = require("./cookies.json");
   await page.setCookie(...cookies);
 
-  await page.goto("https://www.facebook.com/", { waitUntil: "networkidle2" });
+  await page.goto("https://m.facebook.com/", { waitUntil: "networkidle2" });
   console.log("✅ Berhasil buka Facebook");
 
   await page.goto("https://m.facebook.com/groups/514277487342192/", { waitUntil: "networkidle2" });
