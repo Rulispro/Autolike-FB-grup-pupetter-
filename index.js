@@ -245,14 +245,14 @@ const puppeteer = require("puppeteer");
     .map((b, i) => ({
       index: i,
       aria: b.getAttribute("aria-label"),
-      liked: b.getAttribute("aria-pressed") === "true",
+      like: b.getAttribute("aria-pressed") === "true",
     }));
 });
             
     console.log("🧩 Status tombol Like di DOM:", logs.slice(0, 3));
 
     // Fallback jika Like tidak berubah (klik simulasi gagal)
-    if (!logs.some((b) => b.liked)) {
+    if (!logs.some((b) => b.like)) {
   console.log("⚠️ Klik simulasi gagal, coba fallback sentuhan nyata...");
   try {
     const likeBtn = await page.$(
@@ -267,6 +267,10 @@ const puppeteer = require("puppeteer");
         // 🔹 klik langsung dari puppeteer (event Chrome DevTools)
         await likeBtn.click({ delay: 80 });
         console.log("✅ Fallback .click() berhasil dikirim");
+
+        await likeBtn.tap({ delay: 100 });
+        console.log("✅ Fallback .tap() berhasil dikirim");
+
 
         // 🔹 simulasi tap via touchscreen API
         await page.touchscreen.tap(cx, cy);
